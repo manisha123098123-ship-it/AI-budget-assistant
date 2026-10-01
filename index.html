@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket AI Budget Assistant</title>
+    <style>
+        :root {
+            --bg-color: #0d0f18;
+            --card-bg: #161b29;
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff007f;
+            --neon-green: #00ff66;
+            --text-color: #ffffff;
+            --text-muted: #8a99ad;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+            margin-bottom: 5px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+        }
+
+        .card-pink {
+            border-color: rgba(255, 0, 127, 0.3);
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.1);
+        }
+
+        .card-green {
+            border-color: rgba(0, 255, 102, 0.3);
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.1);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .summary-box {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .summary-box h3 {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .summary-box p {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .inc { color: var(--neon-green); text-shadow: 0 0 5px var(--neon-green); }
+        .exp { color: var(--neon-pink); text-shadow: 0 0 5px var(--neon-pink); }
+        .bal { color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        input, select, button {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 8px var(--neon-blue);
+        }
+
+        button.btn-neon {
+            background: transparent;
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-shadow: 0 0 5px var(--neon-green);
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
+        }
+
+        button.btn-neon:hover {
+            background: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-green);
+        }
+
+        .history-list {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border-left: 4px solid var(--neon-blue);
+        }
+
+        .history-item.income { border-left-color: var(--neon-green); }
+        .history-item.expense { border-left-color: var(--neon-pink); }
+
+        /* AI Assistant Box */
+        .ai-chat-box {
+            display: flex;
+            flex-direction: column;
+            height: 380px;
+        }
+
+        .chat-logs {
+            flex: 1;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .msg {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .bot-msg {
+            background: rgba(0, 243, 255, 0.15);
+            border: 1px solid var(--neon-blue);
+            align-self: flex-start;
+            color: #e0ffff;
+        }
+
+        .user-msg {
+            background: rgba(255, 0, 127, 0.15);
+            border: 1px solid var(--neon-pink);
+            align-self: flex-end;
+            color: #ffe0f0;
+        }
+
+        .chat-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input-group input {
+            flex: 1;
+        }
+
+        .chat-input-group button {
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+            cursor: pointer;
+            text-shadow: 0 0 5px var(--neon-pink);
+        }
+
+        .chat-input-group button:hover {
+            background: var(--neon-pink);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon-pink);
+        }
+
+        .chart-container {
+            margin-top: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .bar-wrap {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+        .bar-label { width: 80px; }
+        .bar-bg {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+        .bar-fill {
+            height: 100%;
+            background: var(--neon-blue);
+            box-shadow: 0 0 8px var(--neon-blue);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>POCKET AI BUDGET</h1>
+        <p class="subtitle">Smart Cyberpunk Expense & AI Financial Companion</p>
+    </header>
+
+    <div class="container">
+        
+        <!-- Left Panel: Budget Tracker -->
+        <div class="card card-green">
+            <h2 style="margin-bottom: 15px; color: var(--neon-green);">Dashboard</h2>
+            
+            <div class="summary-grid">
+                <div class="summary-box">
+                    <h3>Income</h3>
+                    <p class="inc" id="total-income">₹0</p>
+                </div>
+                <div class="summary-box">
+                    <h3>Expense</h3>
+                    <p class="exp" id="total-expense">₹0</p>
+                </div>
+                <div class="summary-box">
+                    <h3>Balance</h3>
+                    <p class="bal" id="total-balance">₹0</p>
+                </div>
+            </div>
+
+            <form id="tracker-form">
+                <input type="text" id="desc" placeholder="Transaction description..." required />
+                <input type="number" id="amount" placeholder="Amount (₹)..." required />
+                <select id="type">
+                    <option value="income">Income (+)</option>
+                    <option value="expense">Expense (-)</option>
+                </select>
+                <button type="submit" class="btn-neon">Add Transaction</button>
+            </form>
+
+            <ul class="history-list" id="history">
+                <!-- Dynamic Items -->
+            </ul>
+
+            <div class="chart-container">
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">Budget Usage Overview</p>
+                <div class="bar-wrap">
+                    <span class="bar-label">Spent Ratio</span>
+                    <div class="bar-bg">
+                        <div class="bar-fill" id="spent-bar"></div>
+                    </div>
+                    <span id="spent-pct">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: AI Assistant -->
+        <div class="card card-pink">
+            <h2 style="margin-bottom: 15px; color: var(--neon-pink);">AI Assistant</h2>
+            
+            <div class="ai-chat-box">
+                <div class="chat-logs" id="chat-logs">
+                    <div class="msg bot-msg">
+                        Hello! I am your Pocket AI. Add transactions or ask me for financial advice!
+                    </div>
+                </div>
+
+                <div class="chat-input-group">
+                    <input type="text" id="user-input" placeholder="Ask AI (e.g. 'How to save money?')..." />
+                    <button id="send-btn">Send</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // State
+        let transactions = [];
+
+        const form = document.getElementById('tracker-form');
+        const descInput = document.getElementById('desc');
+        const amountInput = document.getElementById('amount');
+        const typeInput = document.getElementById('type');
+
+        const totalIncomeEl = document.getElementById('total-income');
+        const totalExpenseEl = document.getElementById('total-expense');
+        const totalBalanceEl = document.getElementById('total-balance');
+        const historyEl = document.getElementById('history');
+        const spentBar = document.getElementById('spent-bar');
+        const spentPct = document.getElementById('spent-pct');
+
+        // Form Submit
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const desc = descInput.value;
+            const amount = parseFloat(amountInput.value);
+            const type = typeInput.value;
+
+            if (desc.trim() === '' || isNaN(amount)) return;
+
+            const transaction = { id: Date.now(), desc, amount, type };
+            transactions.push(transaction);
+
+            updateUI();
+            descInput.value = '';
+            amountInput.value = '';
+        });
+
+        function updateUI() {
+            historyEl.innerHTML = '';
+
+            let income = 0;
+            let expense = 0;
+
+            transactions.forEach(t => {
+                if (t.type === 'income') income += t.amount;
+                else expense += t.amount;
+
+                const li = document.createElement('li');
+                li.className = `history-item ${t.type}`;
+                li.innerHTML = `
+                    <span>${t.desc}</span>
+                    <span>${t.type === 'income' ? '+' : '-'}₹${t.amount}</span>
+                `;
+                historyEl.appendChild(li);
+            });
+
+            const balance = income - expense;
+
+            totalIncomeEl.innerText = `₹${income}`;
+            totalExpenseEl.innerText = `₹${expense}`;
+            totalBalanceEl.innerText = `₹${balance}`;
+
+            // Visual Bar Calculation
+            let ratio = income > 0 ? Math.min(Math.round((expense / income) * 100), 100) : 0;
+            spentBar.style.width = ratio + '%';
+            spentPct.innerText = ratio + '%';
+        }
+
+        // Rule-Based AI Assistant
+        const chatLogs = document.getElementById('chat-logs');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        sendBtn.addEventListener('click', handleChat);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleChat();
+        });
+
+        function handleChat() {
+            const query = userInput.value.trim();
+            if (!query) return;
+
+            appendMessage(query, 'user-msg');
+            userInput.value = '';
+
+            setTimeout(() => {
+                const response = generateAIResponse(query.toLowerCase());
+                appendMessage(response, 'bot-msg');
+            }, 400);
+        }
+
+        function appendMessage(text, className) {
+            const msg = document.createElement('div');
+            msg.className = `msg ${className}`;
+            msg.innerText = text;
+            chatLogs.appendChild(msg);
+            chatLogs.scrollTop = chatLogs.scrollHeight;
+        }
+
+        function generateAIResponse(text) {
+            let totalInc = transactions.filter(t => t.type === 'income').reduce((a, b) => a + b.amount, 0);
+            let totalExp = transactions.filter(t => t.type === 'expense').reduce((a, b) => a + b.amount, 0);
+            let bal = totalInc - totalExp;
+
+            if (text.includes('balance') || text.includes('status') || text.includes('summary')) {
+                return `Your current balance is ₹${bal}. Total Income: ₹${totalInc}, Total Expense: ₹${totalExp}.`;
+            }
+            if (text.includes('save') || text.includes('advice') || text.includes('tip')) {
+                if (totalExp > totalInc && totalInc > 0) {
+                    return "Alert: Your expenses exceed your income! Try using the 50/30/20 rule to lower unnecessary spending.";
+                }
+                return "Tip: Aim to save at least 20% of your total income every month before spending on wants.";
+            }
+            if (text.includes('hello') || text.includes('hi') || text.includes('hey')) {
+                return "Hello! I am monitoring your budget. What would you like to ask or analyze?";
+            }
+            return "I can help tracking your spending. Ask me about your 'balance', 'advice on saving', or add transactions!";
+        }
+    </script>
+</body>
+</html>
